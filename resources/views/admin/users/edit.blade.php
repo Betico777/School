@@ -56,6 +56,7 @@
                         name="password"
                         type="password"
                         placeholder="••••••••"
+                        viewable
                     />
                     @error('password')
                         <flux:error>{{ $message }}</flux:error>
@@ -70,6 +71,7 @@
                         name="password_confirmation"
                         type="password"
                         placeholder="••••••••"
+                        viewable
                     />
                 </flux:field>
 

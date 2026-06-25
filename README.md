@@ -6,15 +6,15 @@ Aplicación web construida con **Laravel 13**, **Livewire 4** y **Flux UI**.
 
 ## Requisitos previos
 
-Tener instalado lo siguiente antes de comenzar:
+Instala estas herramientas antes de comenzar:
 
 | Herramienta | Versión mínima | Descarga |
 |---|---|---|
 | PHP | 8.3 | https://www.php.net/downloads |
 | Composer | 2.x | https://getcomposer.org/download |
-| Node.js | 18.x | https://nodejs.org |
-| npm | 9.x | (viene incluido con Node.js) |
-| SQLite | — | Viene incluido en PHP (extensión `pdo_sqlite`) |
+| Node.js | 20.19.0+ | https://nodejs.org |
+| npm | 10.x o superior | (incluido con Node.js) |
+| PostgreSQL (opcional) | 14/15/18 | https://www.postgresql.org/download/ |
 | Git | — | https://git-scm.com/downloads |
 
 > **Verificar instalaciones:**
@@ -23,6 +23,7 @@ Tener instalado lo siguiente antes de comenzar:
 > composer -V
 > node -v
 > npm -v
+> git --version
 > ```
 
 ---
@@ -48,7 +49,7 @@ composer install
 npm install
 ```
 
-### 4. Configurar el archivo de entorno
+### 4. Crear el archivo de entorno
 
 ```bash
 cp .env.example .env
@@ -60,29 +61,67 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-### 6. Crear la base de datos y ejecutar las migraciones
+### 6. Configurar la base de datos
 
-El proyecto usa **SQLite** por defecto. El archivo se crea automáticamente al migrar.
+El proyecto puede usar **SQLite** por defecto o **PostgreSQL**.
+
+#### Opción A: SQLite (configuración por defecto)
+
+En `.env` deja:
+
+```env
+DB_CONNECTION=sqlite
+DB_DATABASE=database/database.sqlite
+```
+
+Si quieres usar SQLite, crea el archivo si no existe:
+
+```bash
+mkdir -p database
+copy NUL database\database.sqlite
+```
+
+#### Opción B: PostgreSQL
+
+En `.env` configura tu conexión PostgreSQL:
+
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5432
+DB_DATABASE=school
+DB_USERNAME=postgres
+DB_PASSWORD=tu_contraseña
+```
+
+> Si usas PostgreSQL, asegúrate de que la base de datos `school` ya exista en tu servidor.
+
+### 7. Ejecutar migraciones
 
 ```bash
 php artisan migrate
 ```
 
-### 7. Cargar los datos iniciales (seeders)
+### 8. Cargar los datos iniciales (seeders)
 
 ```bash
 php artisan db:seed
 ```
 
-Esto crea:
+Esto crea automáticamente:
 - Roles: `admin`, `profesor`, `estudiante`
 - Cursos del 1er al 6to Grado
-- Materias básicas (Matemáticas, Español, Ciencias, etc.)
-- **Usuario administrador por defecto:**
+- Materias básicas
+- Usuario administrador por defecto:
   - Email: `admin@school.com`
   - Contraseña: `Admin@1234`
 
-### 8. Crear el enlace de almacenamiento público
+> Si necesitas reiniciar todo y cargar los seeders nuevamente:
+> ```bash
+> php artisan migrate:fresh --seed
+> ```
+
+### 9. Crear el enlace de almacenamiento público
 
 ```bash
 php artisan storage:link
@@ -92,19 +131,27 @@ php artisan storage:link
 
 ## Arrancar el proyecto
 
-Se necesitan **dos terminales** abiertas al mismo tiempo:
+Necesitas dos terminales abiertas al mismo tiempo.
 
-**Terminal 1 – Servidor Laravel:**
+**Terminal 1 — Servidor Laravel:**
 ```bash
 php artisan serve
 ```
 
-**Terminal 2 – Compilar assets (Vite):**
+**Terminal 2 — Vite para frontend:**
 ```bash
 npm run dev
 ```
 
-Luego abrir el navegador en: **http://localhost:8000**
+Luego abre el navegador en:
+
+- `http://127.0.0.1:8000`
+
+Si `php artisan serve` falla, usa este comando alternativo:
+
+```bash
+php -S 127.0.0.1:8000 -t public
+```
 
 ---
 
@@ -117,6 +164,7 @@ composer install
 npm install
 cp .env.example .env
 php artisan key:generate
+# Elegir conexión SQLite o PostgreSQL en .env
 php artisan migrate
 php artisan db:seed
 php artisan storage:link
@@ -126,8 +174,29 @@ npm run dev         # en otra terminal
 
 ---
 
-## Notas adicionales
+## Notas importantes
 
-- Si al migrar aparece un error de SQLite, verificar que la extensión `pdo_sqlite` esté habilitada en `php.ini`.
-- Para producción, compilar los assets con `npm run build` en lugar de `npm run dev`.
-- Nunca subir el archivo `.env` al repositorio (ya está en `.gitignore`).
+- `node_modules`, `vendor`, `.env` y archivos temporales ya están en `.gitignore`.
+- Para producción, compila los assets con:
+  ```bash
+  npm run build
+  ```
+- Si usas PostgreSQL y la app no conecta, limpia la caché de configuración:
+  ```bash
+  php artisan config:clear
+  ```
+- El usuario admin por defecto es:
+  - Email: `admin@school.com`
+  - Contraseña: `Admin@1234`
+
+---
+
+## Si necesitas verificar el usuario admin en la base de datos
+
+En PostgreSQL puedes ejecutar:
+
+```sql
+SELECT email FROM users WHERE email = 'admin@school.com';
+```
+
+En SQLite, puedes usar cualquier cliente SQLite para abrir `database/database.sqlite`.
